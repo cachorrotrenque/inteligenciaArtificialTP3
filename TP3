@@ -1,0 +1,95 @@
+import java.util.Arrays;
+
+public class RedHopfield {
+    private int[][] pesos;  // Matriz de pesos sinápticos
+    private int tamano;     // Número de neuronas en la red
+
+    // Constructor: Inicializa la red con el tamaño adecuado
+    public RedHopfield(int n) {
+        this.tamano = n;
+        this.pesos = new int[n][n];  // Inicializamos la matriz de pesos a 0
+    }
+
+    // Entrenamiento de la red: Ajusta los pesos según la regla de Hebb
+    public void entrenar(int[] patron) {
+        for (int i = 0; i < tamano; i++) {
+            for (int j = 0; j < tamano; j++) {
+                if (i != j) {  // No ajustamos los pesos cuando i == j (evitar autoajustes)
+                    pesos[i][j] += patron[i] * patron[j];
+                }
+            }
+        }
+    }
+
+    // Recuperar el patrón corregido: Corrección de la imagen utilizando iteraciones
+    public int[] recuperar(int[] patron) {
+        int[] resultado = Arrays.copyOf(patron, patron.length);  // Copiamos el patrón para trabajar con él
+
+        boolean estable = false;
+        while (!estable) {
+            estable = true;  // Suponemos que es estable hasta que detectemos un cambio
+            for (int i = 0; i < tamano; i++) {
+                int suma = 0;
+                for (int j = 0; j < tamano; j++) {
+                    suma += pesos[i][j] * resultado[j];  // Suma ponderada de las conexiones
+                }
+                int nuevoValor = suma >= 0 ? 1 : 0;  // Aplicamos la función de activación: 1 si la suma es positiva o 0 si es negativa
+                if (nuevoValor != resultado[i]) {
+                    estable = false;  // Si hubo un cambio, aún no es estable
+                }
+                resultado[i] = nuevoValor;  // Actualizamos el valor de la neurona
+            }
+        }
+        return resultado;  // Devolvemos el patrón corregido o estabilizado
+    }
+
+    // Mostrar el patrón (imagen) en consola
+    public void mostrarPatron(int[] patron, int dim) {
+        for (int i = 0; i < patron.length; i++) {
+            if (i % dim == 0) System.out.println();  // Saltar de línea por cada fila de la imagen
+            System.out.print(patron[i] == 1 ? "X " : ". ");  // Imprimir "X" para 1 (activo) y "." para 0 (inactivo)
+        }
+        System.out.println();
+    }
+
+    public static void main(String[] args) {
+        int dim = 5;  // Dimensiones de la imagen (5x5)
+        RedHopfield red = new RedHopfield(dim * dim);  // Inicializamos la red con 25 neuronas (5x5)
+
+        // Imagen original (patrón del aro "C") representada en una matriz lineal (5x5)
+        int[] patronOriginal = {
+            0, 1, 1, 1, 0,
+            1, 0, 0, 0, 1,
+            1, 0, 0, 0, 0,
+            1, 0, 0, 0, 1,
+            0, 1, 1, 1, 0
+        };
+
+        // Imagen con ruido (algunos píxeles alterados)
+        int[] patronRuidoso = {
+            0, 1, 1, 1, 0,
+            1, 0, 0, 1, 1,
+            1, 0, 1, 0, 0,
+            1, 0, 0, 0, 1,
+            0, 1, 0, 1, 0
+        };
+
+        // Entrenamos la red con el patrón original
+        red.entrenar(patronOriginal);
+
+        // Mostramos el patrón original
+        System.out.println("Patrón original:");
+        red.mostrarPatron(patronOriginal, dim);
+
+        // Mostramos el patrón con ruido
+        System.out.println("\nPatrón con ruido:");
+        red.mostrarPatron(patronRuidoso, dim);
+
+        // Recuperamos el patrón corregido
+        int[] patronRecuperado = red.recuperar(patronRuidoso);
+
+        // Mostramos el patrón recuperado
+        System.out.println("\nPatrón recuperado:");
+        red.mostrarPatron(patronRecuperado, dim);
+    }
+}
